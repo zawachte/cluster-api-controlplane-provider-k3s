@@ -1,4 +1,4 @@
-domain: controlplane.cluster.x-k8s.io
+domain: cluster.x-k8s.io
 repo: github.com/zawachte-msft/cluster-api-controlplane-provider-k3s
 resources:
 - group: controlplane
