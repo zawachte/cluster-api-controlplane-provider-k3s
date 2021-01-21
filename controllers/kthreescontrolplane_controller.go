@@ -384,17 +384,16 @@ func (r *KThreesControlPlaneReconciler) updateStatus(ctx context.Context, kcp *c
 	if err != nil {
 		return err
 	}
+
+	logger.Info("ClusterStatus", "workload", status)
+
 	kcp.Status.ReadyReplicas = status.ReadyNodes
 	kcp.Status.UnavailableReplicas = replicas - status.ReadyNodes
 
-	// This only gets initialized once and does not change if the kubeadm config map goes away.
-	if status.HasKubeadmConfig {
-		kcp.Status.Initialized = true
-		conditions.MarkTrue(kcp, controlplanev1.AvailableCondition)
-	}
-
 	if kcp.Status.ReadyReplicas > 0 {
 		kcp.Status.Ready = true
+		kcp.Status.Initialized = true
+		conditions.MarkTrue(kcp, controlplanev1.AvailableCondition)
 	}
 
 	return nil
@@ -503,7 +502,7 @@ func (r *KThreesControlPlaneReconciler) reconcile(ctx context.Context, cluster *
 	case numMachines < desiredReplicas && numMachines == 0:
 		// Create new Machine w/ init
 		logger.Info("Initializing control plane", "Desired", desiredReplicas, "Existing", numMachines)
-		conditions.MarkFalse(controlPlane.KCP, controlplanev1.AvailableCondition, controlplanev1.WaitingForKubeadmInitReason, clusterv1.ConditionSeverityInfo, "")
+		conditions.MarkFalse(controlPlane.KCP, controlplanev1.AvailableCondition, controlplanev1.WaitingForKthreesServerReason, clusterv1.ConditionSeverityInfo, "")
 		return r.initializeControlPlane(ctx, cluster, kcp, controlPlane)
 	// We are scaling up
 	case numMachines < desiredReplicas && numMachines > 0:
@@ -631,14 +630,14 @@ func (r *KThreesControlPlaneReconciler) reconcileControlPlaneConditions(ctx cont
 		return ctrl.Result{}, nil
 	}
 
-	//workloadCluster, err := r.managementCluster.GetWorkloadCluster(ctx, util.ObjectKey(controlPlane.Cluster))
-	//if err != nil {
-	//	return ctrl.Result{}, errors.Wrap(err, "cannot get remote client to workload cluster")
-	//}
+	workloadCluster, err := r.managementCluster.GetWorkloadCluster(ctx, util.ObjectKey(controlPlane.Cluster))
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(err, "cannot get remote client to workload cluster")
+	}
 
 	// Update conditions status
-	//workloadCluster.UpdateStaticPodConditions(ctx, controlPlane)
-	//workloadCluster.UpdateEtcdConditions(ctx, controlPlane)
+	workloadCluster.UpdateStaticPodConditions(ctx, controlPlane)
+	workloadCluster.UpdateEtcdConditions(ctx, controlPlane)
 
 	// Patch machines with the updated conditions.
 	if err := controlPlane.PatchMachines(ctx); err != nil {
@@ -679,15 +678,15 @@ func (r *KThreesControlPlaneReconciler) upgradeControlPlane(
 	//	}
 
 
-	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration != nil {
-		imageRepository := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.ImageRepository
+	if kcp.Spec.KThreesConfigSpec.ClusterConfiguration != nil {
+		imageRepository := kcp.Spec.KThreesConfigSpec.ClusterConfiguration.ImageRepository
 		if err := workloadCluster.UpdateImageRepositoryInKubeadmConfigMap(ctx, imageRepository); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "failed to update the image repository in the kubeadm config map")
 		}
 	}
 
-	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration != nil && kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local != nil {
-		meta := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ImageMeta
+	if kcp.Spec.KThreesConfigSpec.ClusterConfiguration != nil && kcp.Spec.KThreesConfigSpec.ClusterConfiguration.Etcd.Local != nil {
+		meta := kcp.Spec.KThreesConfigSpec.ClusterConfiguration.Etcd.Local.ImageMeta
 		if err := workloadCluster.UpdateEtcdVersionInKubeadmConfigMap(ctx, meta.ImageRepository, meta.ImageTag); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "failed to update the etcd version in the kubeadm config map")
 		}

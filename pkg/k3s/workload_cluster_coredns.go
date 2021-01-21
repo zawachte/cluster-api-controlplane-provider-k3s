@@ -22,12 +22,12 @@ import (
 
 	"github.com/coredns/corefile-migration/migration"
 	"github.com/pkg/errors"
+	controlplanev1 "github.com/zawachte-msft/cluster-api-controlplane-provider-k3s/api/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/types/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+
 	"sigs.k8s.io/cluster-api/util"
 	containerutil "sigs.k8s.io/cluster-api/util/container"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -67,18 +67,19 @@ type coreDNSInfo struct {
 
 // UpdateCoreDNS updates the kubeadm configmap, coredns corefile and coredns
 // deployment.
-func (w *Workload) UpdateCoreDNS(ctx context.Context, kcp *controlplanev1.KubeadmControlPlane) error {
+func (w *Workload) UpdateCoreDNS(ctx context.Context, kcp *controlplanev1.KThreesControlPlane) error {
 	// Return early if we've been asked to skip CoreDNS upgrades entirely.
 	if _, ok := kcp.Annotations[controlplanev1.SkipCoreDNSAnnotation]; ok {
 		return nil
 	}
-
+	/**
 	// Return early if the configuration is nil.
-	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration == nil {
+	if kcp.Spec.KThreesConfigSpec.ServerConfig == KThreesServerConfig {
 		return nil
 	}
 
-	clusterConfig := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration
+	clusterConfig := kcp.Spec.KThreesConfigSpec.ServerConfig
+
 	// Return early if the type is anything other than empty (default), or CoreDNS.
 	if clusterConfig.DNS.Type != "" && clusterConfig.DNS.Type != kubeadmv1.CoreDNS {
 		return nil
@@ -115,6 +116,7 @@ func (w *Workload) UpdateCoreDNS(ctx context.Context, kcp *controlplanev1.Kubead
 	if err := w.updateCoreDNSDeployment(ctx, info); err != nil {
 		return errors.Wrap(err, "unable to update coredns deployment")
 	}
+	**/
 	return nil
 }
 

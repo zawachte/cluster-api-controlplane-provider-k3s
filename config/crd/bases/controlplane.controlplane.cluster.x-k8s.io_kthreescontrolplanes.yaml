@@ -15,7 +15,7 @@ spec:
     name: Initialized
     type: boolean
   - JSONPath: .status.ready
-    description: KubeadmControlPlane API Server is ready to receive requests
+    description: KThreesControlPlane API Server is ready to receive requests
     name: API Server Available
     type: boolean
   - JSONPath: .spec.version
@@ -111,7 +111,7 @@ spec:
                   type: string
               type: object
             kthreesConfigSpec:
-              description: KubeadmConfigSpec is a KubeadmConfigSpec to use for initializing
+              description: KThreesConfigSpec is a KThreesConfigSpec to use for initializing
                 and joining machines to the control plane.
               properties:
                 agentConfig:
@@ -303,7 +303,7 @@ spec:
           description: KThreesControlPlaneStatus defines the observed state of KThreesControlPlane
           properties:
             conditions:
-              description: Conditions defines current service state of the KubeadmControlPlane.
+              description: Conditions defines current service state of the KThreesControlPlane.
               items:
                 description: Condition defines an observation of a Cluster API resource
                   operational state.
@@ -364,7 +364,7 @@ spec:
               format: int64
               type: integer
             ready:
-              description: Ready denotes that the KubeadmControlPlane API Server is
+              description: Ready denotes that the KThreesControlPlane API Server is
                 ready to receive requests.
               type: boolean
             readyReplicas:

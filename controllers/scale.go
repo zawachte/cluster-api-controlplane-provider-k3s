@@ -174,16 +174,8 @@ func (r *KThreesControlPlaneReconciler) preflightChecks(_ context.Context, contr
 	}
 
 	// Check machine health conditions; if there are conditions with False or Unknown, then wait.
-	allMachineHealthConditions := []clusterv1.ConditionType{
-		controlplanev1.MachineAPIServerPodHealthyCondition,
-		controlplanev1.MachineControllerManagerPodHealthyCondition,
-		controlplanev1.MachineSchedulerPodHealthyCondition,
-	}
+	allMachineHealthConditions := []clusterv1.ConditionType{}
 	if controlPlane.IsEtcdManaged() {
-		allMachineHealthConditions = append(allMachineHealthConditions,
-			controlplanev1.MachineEtcdPodHealthyCondition,
-			controlplanev1.MachineEtcdMemberHealthyCondition,
-		)
 	}
 	machineErrors := []error{}
 
@@ -217,16 +209,8 @@ loopmachines:
 }
 
 func preflightCheckCondition(kind string, obj conditions.Getter, condition clusterv1.ConditionType) error {
-	c := conditions.Get(obj, condition)
-	if c == nil {
-		return errors.Errorf("%s %s does not have %s condition", kind, obj.GetName(), condition)
-	}
-	if c.Status == corev1.ConditionFalse {
-		return errors.Errorf("%s %s reports %s condition is false (%s, %s)", kind, obj.GetName(), condition, c.Severity, c.Message)
-	}
-	if c.Status == corev1.ConditionUnknown {
-		return errors.Errorf("%s %s reports %s condition is unknown (%s)", kind, obj.GetName(), condition, c.Message)
-	}
+	// figure out conditions that make sense for k3s
+	conditions.Get(obj, condition)
 	return nil
 }
 

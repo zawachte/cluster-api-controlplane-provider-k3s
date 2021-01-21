@@ -17,10 +17,10 @@ limitations under the License.
 package v1alpha3
 
 import (
+	"github.com/zawachte-msft/cluster-api-controlplane-provider-k3s/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	"sigs.k8s.io/cluster-api/errors"
 
 	cabp3v1 "github.com/zawachte-msft/cluster-api-bootstrap-provider-k3s/api/v1alpha3"
 )
@@ -31,6 +31,9 @@ const (
 	// KThreesServerConfigurationAnnotation is a machine annotation that stores the json-marshalled string of KCP ClusterConfiguration.
 	// This annotation is used to detect any changes in ClusterConfiguration and trigger machine rollout in KCP.
 	KThreesServerConfigurationAnnotation = "controlplane.cluster.x-k8s.io/kthrees-server-configuration"
+
+	// SkipCoreDNSAnnotation annotation explicitly skips reconciling CoreDNS if set
+	SkipCoreDNSAnnotation = "controlplane.cluster.x-k8s.io/skip-coredns"
 )
 
 // KThreesControlPlaneSpec defines the desired state of KThreesControlPlane
@@ -48,7 +51,7 @@ type KThreesControlPlaneSpec struct {
 	// offered by an infrastructure provider.
 	InfrastructureTemplate corev1.ObjectReference `json:"infrastructureTemplate"`
 
-	// KubeadmConfigSpec is a KubeadmConfigSpec
+	// KThreesConfigSpec is a KThreesConfigSpec
 	// to use for initializing and joining machines to the control plane.
 	KThreesConfigSpec cabp3v1.KThreesConfigSpec `json:"kthreesConfigSpec"`
 
@@ -102,7 +105,7 @@ type KThreesControlPlaneStatus struct {
 	// +optional
 	Initialized bool `json:"initialized"`
 
-	// Ready denotes that the KubeadmControlPlane API Server is ready to
+	// Ready denotes that the KThreesControlPlane API Server is ready to
 	// receive requests.
 	// +optional
 	Ready bool `json:"ready"`
@@ -111,7 +114,7 @@ type KThreesControlPlaneStatus struct {
 	// state, and will be set to a token value suitable for
 	// programmatic interpretation.
 	// +optional
-	FailureReason errors.KubeadmControlPlaneStatusError `json:"failureReason,omitempty"`
+	FailureReason errors.KThreesControlPlaneStatusError `json:"failureReason,omitempty"`
 
 	// ErrorMessage indicates that there is a terminal problem reconciling the
 	// state, and will be set to a descriptive error message.
@@ -122,7 +125,7 @@ type KThreesControlPlaneStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// Conditions defines current service state of the KubeadmControlPlane.
+	// Conditions defines current service state of the KThreesControlPlane.
 	// +optional
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
@@ -131,7 +134,7 @@ type KThreesControlPlaneStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 // +kubebuilder:printcolumn:name="Initialized",type=boolean,JSONPath=".status.initialized",description="This denotes whether or not the control plane has the uploaded kubeadm-config configmap"
-// +kubebuilder:printcolumn:name="API Server Available",type=boolean,JSONPath=".status.ready",description="KubeadmControlPlane API Server is ready to receive requests"
+// +kubebuilder:printcolumn:name="API Server Available",type=boolean,JSONPath=".status.ready",description="KThreesControlPlane API Server is ready to receive requests"
 // +kubebuilder:printcolumn:name="Version",type=string,JSONPath=".spec.version",description="Kubernetes version associated with this control plane"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=".status.replicas",description="Total number of non-terminated machines targeted by this control plane"
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=".status.readyReplicas",description="Total number of fully running and ready control plane machines"
